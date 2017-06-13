@@ -96,16 +96,12 @@ namespace FileByteReader.models
             {
                 //Plain Text Copy
                 for(int i=0;i<NumPlaintText;i++)
-                {
                     output.Add(input[i]);
-                }
 
                 //Character Copy
                 int count = output.Count-1;
                 for(int i=0;i<NumCopy;i++)
-                {
                     output.Add(output[count-CopyOffset+i]);
-                }
             }
 
         }
@@ -116,6 +112,7 @@ namespace FileByteReader.models
 
         public Directory(IndexTable.Index index, byte[] d)
         {
+            //Header
             byte[] h = d.SubArray((int)index.Offset, (int)index.Size);
 
             CompressedSize = Extensions.ExtractUInt32(h, 0);
@@ -131,6 +128,7 @@ namespace FileByteReader.models
 
             Size = BitConverter.ToUInt32(arr, 0);
 
+            //Decompression
             byte[] CompressedData = d.SubArray((int)(index.Offset+index.Size),(int)CompressedSize);
             List<byte> UncompressedData = new List<byte>();
 
