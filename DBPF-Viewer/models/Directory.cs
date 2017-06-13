@@ -11,10 +11,12 @@ namespace FileByteReader.models
     {
         public class ControlCharacter
         {
+            //http://www.wiki.sc4devotion.com/index.php?title=DBPF_Compression
+
             public int CCLength;
-            public UInt16 NumPlaintText;
-            public UInt16 NumCopy;
-            public UInt16 CopyOffset;
+            public int NumPlaintText;
+            public int NumCopy;
+            public int CopyOffset;
             public byte byte0;
 
             /*
@@ -27,30 +29,67 @@ namespace FileByteReader.models
                  (n in this case is the "where from" from above)
             */
 
-            public ControlCharacter(byte b)
+            public ControlCharacter(byte[] b)
             {
-                BitArray arr = new BitArray(b);
+                BitArray arr = new BitArray(b[0]);
 
                 if (arr[0] == false)
                 {
                     CCLength = 2;
+                    byte[] C = b.SubArray(0,2);
+                    arr = new BitArray(C);
+                    
+                    NumPlaintText = C[0] & 0x03;
+                    NumCopy = ( (C[0] & 0x1C) >> 2) + 3;
+                    CopyOffset = ( (C[0] & 0x60) << 3) + C[1] + 1;
 
                 }
                 else if (arr[1] == false)
                 {
                     CCLength = 3;
+                    byte[] C = b.SubArray(0,3);
+
+                    NumPlaintText = ((C[1] & 0xC0) >> 6 ) & 0x03;
+                    NumCopy = (C[0] & 0x3F) + 4;
+                    CopyOffset = ( (C[1] & 0x3F) << 8 ) + C[2] + 1;
+
                 }
                 else if (arr[2] == false)
                 {
                     CCLength = 4;
+                    byte[] C = b.SubArray(0,4);
+
+                    //Sims2 - SimCity 4 Deluxe
+                    
+                    NumPlaintText = C[0] & 0x03;
+                    NumCopy = ((C[0] & 0x0C) << 6 )  + C[3] + 5;
+                    CopyOffset =((C[0] & 0x10) << 12 ) + (C[1] << 8 ) + C[2] + 1;
+                    
+
+                    //SimCity 4
+                    /*
+                    NumPlaintText = C[0] & 0x03;
+                    NumCopy = ( (C[0] & 0x1C) << 6 )  + C[3] + 5;
+                    CopyOffset = (C[1] << 8) + C[2];
+                    */
                 }
                 else if (arr[0] == arr[1] == arr[2] == true)
                 {
                     CCLength = 1;
+                    byte[] C = b.SubArray(0,1);
+
+                    NumPlaintText =((C[0]& 0x1F) << 2 ) + 4;
+                    NumCopy = 0 ;
+                    CopyOffset = 0; 
                 }
                 else
                 {
                     CCLength = 1;
+                    byte[] C = b.SubArray(0,1);
+
+                    NumPlaintText = (C[0] & 0x03);
+                    NumCopy =    0 ;
+                    CopyOffset =   0;
                 }
             }
 
