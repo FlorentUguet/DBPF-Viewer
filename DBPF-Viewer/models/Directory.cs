@@ -144,8 +144,8 @@ namespace FileByteReader.models
                 bId += C.NumPlaintText;
             }
 
-            Console.WriteLine("Uncompressed data: " + Size);
-            Console.WriteLine("Expected Size    : " + UncompressedData.Count);
+            Console.WriteLine("Uncompressed data: " + UncompressedData.Count);
+            Console.WriteLine("Expected Size    : " + Size);
         }
     }
 }
