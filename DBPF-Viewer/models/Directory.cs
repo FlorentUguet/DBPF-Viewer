@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace FileByteReader.models
 
             public ControlCharacter(byte[] b)
             {
-                BitArray arr = new BitArray(b[0]);
+                BitArray arr = new BitArray(b);
 
                 if (arr[0] == false)
                 {
@@ -110,13 +111,23 @@ namespace FileByteReader.models
         public UInt16 CompressionID;
         public UInt32 Size;
 
+        IndexTable.Index index;
+        byte[] d;
+
         public Directory(IndexTable.Index index, byte[] d)
         {
             //Header
             byte[] h = d.SubArray((int)index.Offset, (int)index.Size);
 
+            File.WriteAllBytes(@"D:\Program Files (x86)\Maxis\SimCity 4 Deluxe\SimPE\header.dir", h);
+
             CompressedSize = Extensions.ExtractUInt32(h, 0);
             CompressionID = Extensions.ExtractUInt16(h, 4);
+            
+            if(CompressionID != 4347)
+            {
+                throw new Exception("Compression ID invalid. Expected 4347, got " + CompressionID);
+            }
 
             byte[] arr = new byte[4];
             byte[] buf = h.SubArray(6, 3);
@@ -128,17 +139,26 @@ namespace FileByteReader.models
 
             Size = BitConverter.ToUInt32(arr, 0);
 
+            this.d = d;
+            this.index = index;
+        }
+
+        public void Decompress(int start, int end)
+        {
             //Decompression
-            byte[] CompressedData = d.SubArray((int)(index.Offset+index.Size),(int)CompressedSize);
+            Console.WriteLine("Compressed data : " + (end - start));
+            Console.WriteLine("Expected Size   : " + CompressedSize);
+
+            byte[] CompressedData = d.SubArray(start, end-start);
             List<byte> UncompressedData = new List<byte>();
 
             int bId = 0;
 
-            while(bId<CompressedSize)
+            while (bId < CompressedSize)
             {
-                ControlCharacter C = new ControlCharacter(CompressedData.SubArray(bId,4));
+                ControlCharacter C = new ControlCharacter(CompressedData.SubArray(bId, 4));
                 bId += C.CCLength;
-                C.Process(CompressedData.SubArray(bId,C.NumPlaintText),UncompressedData);
+                C.Process(CompressedData.SubArray(bId, C.NumPlaintText), UncompressedData);
                 bId += C.NumPlaintText;
             }
 

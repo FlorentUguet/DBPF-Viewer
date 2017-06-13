@@ -12,6 +12,8 @@ namespace FileByteReader.models
         //http://wiki.xentax.com/index.php/Maxis_DBPF
         //http://www.wiki.sc4devotion.com/index.php?title=DBPF
 
+        public static int HeaderSize = 96;
+
         public string Header;
         public UInt32 MajorVersion;
         public UInt32 MinorVersion;
@@ -69,6 +71,7 @@ namespace FileByteReader.models
 
             Indexes = new IndexTable(IndexMajorVersion, IndexMinorVersion, IndexEntryCount, d.SubArray((int)IndexOffset, (int)IndexSize));
             DIR = new Directory(Indexes.IndexDir, d);
+            DIR.Decompress(HeaderSize, (int)IndexOffset);
 
             //Console.WriteLine("Test Insta is " + Indexes.Indexes[953].InstanceID.ToString("X"));
             //Console.WriteLine("Test Group is " + Indexes.Indexes[953].GroupID.ToString("X"));
