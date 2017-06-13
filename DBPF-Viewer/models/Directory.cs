@@ -65,7 +65,6 @@ namespace FileByteReader.models
                     NumCopy = ((C[0] & 0x0C) << 6 )  + C[3] + 5;
                     CopyOffset =((C[0] & 0x10) << 12 ) + (C[1] << 8 ) + C[2] + 1;
                     
-
                     //SimCity 4
                     /*
                     NumPlaintText = C[0] & 0x03;
@@ -93,6 +92,22 @@ namespace FileByteReader.models
                 }
             }
 
+            public void Process(byte[] input, List<byte> output)
+            {
+                //Plain Text Copy
+                for(int i=0;i<NumPlaintText;i++)
+                {
+                    output.Add(input[i]);
+                }
+
+                //Character Copy
+                int count = output.Count-1;
+                for(int i=0;i<NumCopy;i++)
+                {
+                    output.Add(output[count-CopyOffset+i]);
+                }
+            }
+
         }
 
         public UInt32 CompressedSize;
@@ -115,6 +130,22 @@ namespace FileByteReader.models
             }
 
             Size = BitConverter.ToUInt32(arr, 0);
+
+            byte[] CompressedData = d.SubArray((int)(index.Offset+index.Size),(int)CompressedSize);
+            List<byte> UncompressedData = new List<byte>();
+
+            int bId = 0;
+
+            while(bId<CompressedSize)
+            {
+                ControlCharacter C = new ControlCharacter(CompressedData.SubArray(bId,4));
+                bId += C.CCLength;
+                C.Process(CompressedData.SubArray(bId,C.NumPlaintText),UncompressedData);
+                bId += C.NumPlaintText;
+            }
+
+            Console.WriteLine("Uncompressed data: " + Size);
+            Console.WriteLine("Expected Size    : " + UncompressedData.Count);
         }
     }
 }
